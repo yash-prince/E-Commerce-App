@@ -1,5 +1,6 @@
 import { Cart } from "../models/cart.js";
 import { Order } from "../models/Order.js";
+import { Product } from "../models/Product.js";
 import sendOrderConfirmation from "../utils/sendOrderConfirmation.js";
 import TryCatch from "../utils/TryCatch.js";
 
@@ -22,7 +23,7 @@ export const newOrderCod = TryCatch(async(req,res)=>{
         return {
         product:i.product._id,
         name:i.product.title,
-        price:i.price,
+        price:i.product.price,
         quantity:i.quantity,
     };
     });
@@ -48,6 +49,7 @@ export const newOrderCod = TryCatch(async(req,res)=>{
     }
 
     await Cart.deleteMany({user:req.user._id})
+    
 
     await sendOrderConfirmation({
         email:req.user.email,
@@ -63,3 +65,70 @@ export const newOrderCod = TryCatch(async(req,res)=>{
     })
 
 });
+
+export const getAllOrders = TryCatch(async(req,res)=>{
+    const orders = await Order.find({user:req.user._id});
+
+    res.json({orders : orders.reverse()});
+});
+
+export const getAllOrdersAdmin = TryCatch(async(req,res)=>{
+    if(req.user.role !== "admin")
+        return res.status(403).json({
+    message:"You are not an admin",
+});
+
+    const orders = await Order.find().populate("user").sort({createdAt:-1});
+
+    res.json(orders);
+});
+
+export const getMyOrder = TryCatch(async(req,res)=>{
+    const order = await Order.findById(req.params.id)
+    .populate("items.product")
+    .populate("user")
+
+    res.json(order);
+});
+
+export const updateStatus = TryCatch(async(req,res)=>{
+    if(req.user.role !== "admin")
+        return res.status(403).json({
+    message:"You are not an admin",
+});
+
+    const order = await Order.findById(req.params.id)
+
+    const{status}=req.body
+
+    order.status=status
+    await order.save();
+    
+    res.json({
+        message:"order status updated",
+        order,
+    })
+});
+
+export const getStats = TryCatch(async(req,res)=>{
+
+    if(req.user.role !== "admin")
+        return res.status(403).json({
+    message:"You are not an admin",
+});
+    const cod = await Order.find({method:"cod"}).countDocuments()
+    const online = await Order.find({method:"online"}).countDocuments()
+
+    const products = await Product.find()
+
+    const data = products.map((prod)=>({
+        name:prod.title,
+        sold:prod.sold,
+    }));
+
+    res.json({
+        cod,
+        online,
+        data,
+    })
+})

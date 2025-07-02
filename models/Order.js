@@ -35,7 +35,10 @@ const Orderschema = new mongoose.Schema({
         type:String,
         requires:true,
     },
-
+    status:{
+        type:String,
+        default:"Pending",
+    },
     paidAt:{
         type:String,
     },

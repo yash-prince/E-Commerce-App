@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // Disable SSL verification for outgoing requests
 import express from "express";
 import dotenv from "dotenv";
 import connectDb from "./utils/db.js";
@@ -8,7 +9,7 @@ dotenv.config();
 cloudinary.v2.config({
     cloud_name: process.env.CLOUD_NAME, 
     api_key: process.env.CLOUD_API_KEY, 
-    api_secret: process.env.CLOUD_API_SECCRET
+    api_secret: process.env.CLOUD_API_SECRET
 });
 
 const app=express();

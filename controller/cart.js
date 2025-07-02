@@ -44,14 +44,28 @@ export const addCart = TryCatch(async(req,res)=>{
         
 });
 
-export const removeFromCart = TryCatch(async(req,res)=>{
-    const cart = await Cart.findById(req.params.id)
+export const removeFromCart = TryCatch(async(req, res) => {
+  // 1. Find cart item and verify ownership
+  const cart = await Cart.findOne({
+    _id: req.params.id,
+    user: req.user._id  // Critical security check
+  });
 
-    await cart.deleteOne()
+  // 2. Handle not found scenario
+  if (!cart) {
+    return res.status(404).json({
+      success: false,
+      message: "Cart item not found"
+    });
+  }
 
-    res.json({
-        message:"Removed from cart",
-    })
+  // 3. Delete the item
+  await cart.deleteOne();
+
+  res.json({
+    success: true,
+    message: "Removed from cart",
+  });
 });
 
 export const updateCart = TryCatch(async(req,res) =>{
